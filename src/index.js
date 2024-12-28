@@ -3,10 +3,32 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 
 function App() {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState('login');
+  const [users, setUsers] = useState([
+    { email: 'user@example.com', password: 'password' }, // Sample hardcoded user data
+  ]);
+  const [loggedInUser, setLoggedInUser] = useState(null);
+
+  const addUser = (user) => {
+    setUsers([...users, user]);
+  };
+
+  const handleLoginSuccess = (user) => {
+    setLoggedInUser(user);
+    setActiveSection('dashboard'); // Show the dashboard after successful login
+  };
+
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    setActiveSection('login'); // Redirect to login page on logout
+  };
 
   const renderSection = () => {
     switch (activeSection) {
+      case 'login':
+        return <Login setActiveSection={setActiveSection} users={users} handleLoginSuccess={handleLoginSuccess} />;
+      case 'signup':
+        return <Signup setActiveSection={setActiveSection} addUser={addUser} />;
       case 'dashboard':
         return <Dashboard />;
       case 'courses':
@@ -25,17 +47,112 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Header setActiveSection={setActiveSection} />
-      <main>
-        {renderSection()}
-      </main>
-      <Footer />
+    <div className="app">
+      {/* Render Header only if the user is logged in */}
+      {loggedInUser && <Header setActiveSection={setActiveSection} handleLogout={handleLogout} />}
+      {renderSection()}
     </div>
   );
 }
 
-function Header({ setActiveSection }) {
+function Login({ setActiveSection, users, handleLoginSuccess }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Check if the entered email and password match any user in the users array
+    const user = users.find((user) => user.email === email && user.password === password);
+
+    if (user) {
+      handleLoginSuccess(user); // Pass the logged-in user to setLoggedInUser and navigate to the dashboard
+    } else {
+      setError('Invalid email or password');
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <h2>Login</h2>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Login</button>
+        {error && <p className="error">{error}</p>}
+      </form>
+      <p>
+        Don't have an account? <a href="#" onClick={() => setActiveSection('signup')}>Sign Up</a>
+      </p>
+    </div>
+  );
+}
+
+function Signup({ setActiveSection, addUser }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignup = (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+    } else {
+      // Add new user to the list (assuming a simple users array or a state update)
+      addUser({ email, password });
+      setActiveSection('login'); // After successful signup, redirect to login page
+    }
+  };
+
+  return (
+    <div className="signup-container">
+      <h2>Sign Up</h2>
+      <form onSubmit={handleSignup}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        <button type="submit">Sign Up</button>
+        {error && <p className="error">{error}</p>}
+      </form>
+      <p>
+        Already have an account? <a href="#" onClick={() => setActiveSection('login')}>Login</a>
+      </p>
+    </div>
+  );
+}
+
+function Header({ setActiveSection, handleLogout }) {
   return (
     <header className="header">
       <h1>Medico Learning Platform</h1>
@@ -49,9 +166,11 @@ function Header({ setActiveSection }) {
           <li><a href="#notes" onClick={() => setActiveSection('notes')}>Notes</a></li>
         </ul>
       </nav>
+      <button onClick={handleLogout}>Logout</button>
     </header>
   );
 }
+
 
 function Dashboard() {
   return (

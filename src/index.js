@@ -91,17 +91,34 @@ function Login({ setActiveSection, users, handleLoginSuccess }) {
 
   const handleLogin = (e) => {
     e.preventDefault();
+    // Check if the entered email and password match any user in the users array
     const user = users.find((user) => user.email === email && user.password === password);
-    if (user) handleLoginSuccess(user);
-    else setError('Invalid email or password');
+
+    if (user) {
+      handleLoginSuccess(user); // Pass the logged-in user to setLoggedInUser and navigate to the dashboard
+    } else {
+      setError('Invalid email or password');
+    }
   };
 
   return (
     <div className="login-container">
       <h2>Login</h2>
       <form onSubmit={handleLogin}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit">Login</button>
         {error && <p className="error">{error}</p>}
       </form>
@@ -112,6 +129,7 @@ function Login({ setActiveSection, users, handleLoginSuccess }) {
   );
 }
 
+
 function Signup({ setActiveSection, addUser }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -120,10 +138,12 @@ function Signup({ setActiveSection, addUser }) {
 
   const handleSignup = (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) setError('Passwords do not match');
-    else {
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+    } else {
+      // Add new user to the list (assuming a simple users array or a state update)
       addUser({ email, password });
-      setActiveSection('login');
+      setActiveSection('login'); // After successful signup, redirect to login page
     }
   };
 
@@ -131,9 +151,27 @@ function Signup({ setActiveSection, addUser }) {
     <div className="signup-container">
       <h2>Sign Up</h2>
       <form onSubmit={handleSignup}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
         <button type="submit">Sign Up</button>
         {error && <p className="error">{error}</p>}
       </form>
@@ -171,6 +209,11 @@ function Dashboard() {
     <section id="dashboard">
       <h2>Dashboard</h2>
       <p>Welcome to your personalized dashboard. Access your learning materials, track progress, and stay updated.</p>
+      <ul>
+        <li>Track your daily progress</li>
+        <li>View upcoming exams and deadlines</li>
+        <li>Access quick links to your courses and tests</li>
+      </ul>
     </section>
   );
 }
@@ -179,34 +222,69 @@ function Courses() {
   return (
     <section id="courses">
       <h2>Courses</h2>
-      <p>Explore and access detailed course materials.</p>
+      <div className="course-grid">
+        <div className="course">
+          <h3>Anatomy</h3>
+          <p>Comprehensive video lectures and notes.</p>
+        </div>
+        <div className="course">
+          <h3>Physiology</h3>
+          <p>Detailed explanations with quizzes.</p>
+        </div>
+        <div className="course">
+          <h3>Pathology</h3>
+          <p>Master key concepts with interactive modules.</p>
+        </div>
+        <div className="course">
+          <h3>Pharmacology</h3>
+          <p>Learn drug mechanisms with interactive diagrams.</p>
+        </div>
+      </div>
     </section>
   );
 }
+
 
 function Tests() {
   return (
     <section id="tests">
       <h2>Tests</h2>
-      <p>Evaluate your knowledge through interactive tests.</p>
+      <p>Evaluate your knowledge with quizzes and exams tailored to your courses.</p>
+      <ul>
+        <li>Practice MCQs for each subject</li>
+        <li>Simulate mock exams with timed tests</li>
+        <li>View detailed solutions and explanations</li>
+      </ul>
     </section>
   );
 }
+
 
 function Analysis() {
   return (
     <section id="analysis">
       <h2>Analysis</h2>
-      <p>Analyze your progress with performance insights.</p>
+      <p>Analyze your performance and progress through detailed insights.</p>
+      <ul>
+        <li>View subject-wise performance trends</li>
+        <li>Identify strengths and weaknesses</li>
+        <li>Access performance heatmaps for better focus</li>
+      </ul>
     </section>
   );
 }
+
 
 function Notifications() {
   return (
     <section id="notifications">
       <h2>Notifications</h2>
-      <p>Stay updated with the latest alerts and announcements.</p>
+      <p>Stay updated with the latest announcements and reminders.</p>
+      <ul>
+        <li>Exam schedules and changes</li>
+        <li>Course updates and new content</li>
+        <li>Important platform notifications</li>
+      </ul>
     </section>
   );
 }
@@ -215,7 +293,12 @@ function Notes() {
   return (
     <section id="notes">
       <h2>Notes</h2>
-      <p>Access and manage your study notes efficiently.</p>
+      <p>Access your saved notes and organize your learning resources.</p>
+      <ul>
+        <li>View subject-wise notes</li>
+        <li>Add new notes with rich formatting options</li>
+        <li>Organize notes with tags and folders</li>
+      </ul>
     </section>
   );
 }
@@ -256,6 +339,14 @@ function Feedback() {
         <button type="submit">Submit</button>
       </form>
     </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer>
+      <p>&copy; 2024 Medico Learning Platform. All rights reserved.</p>
+    </footer>
   );
 }
 

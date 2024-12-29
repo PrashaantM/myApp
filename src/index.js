@@ -4,23 +4,19 @@ import './index.css';
 
 function App() {
   const [activeSection, setActiveSection] = useState('login');
-  const [users, setUsers] = useState([
-    { email: 'user@example.com', password: 'password' }, // Sample hardcoded user data
-  ]);
+  const [users, setUsers] = useState([{ email: 'user@example.com', password: 'password' }]);
   const [loggedInUser, setLoggedInUser] = useState(null);
 
-  const addUser = (user) => {
-    setUsers([...users, user]);
-  };
+  const addUser = (user) => setUsers([...users, user]);
 
   const handleLoginSuccess = (user) => {
     setLoggedInUser(user);
-    setActiveSection('dashboard'); // Show the dashboard after successful login
+    setActiveSection('dashboard');
   };
 
   const handleLogout = () => {
     setLoggedInUser(null);
-    setActiveSection('login'); // Redirect to login page on logout
+    setActiveSection('login');
   };
 
   const renderSection = () => {
@@ -29,6 +25,8 @@ function App() {
         return <Login setActiveSection={setActiveSection} users={users} handleLoginSuccess={handleLoginSuccess} />;
       case 'signup':
         return <Signup setActiveSection={setActiveSection} addUser={addUser} />;
+        case 'calendar':
+        return <Calendar />;
       case 'dashboard':
         return <Dashboard />;
       case 'courses':
@@ -41,6 +39,14 @@ function App() {
         return <Notifications />;
       case 'notes':
         return <Notes />;
+      case 'profile':
+        return <Profile loggedInUser={loggedInUser} />;
+      case 'qbanks':
+        return <Qbanks />;
+      case 'video-recordings':
+        return <VideoRecordings />;
+      case 'feedback':
+        return <Feedback />;
       default:
         return <Dashboard />;
     }
@@ -48,10 +54,33 @@ function App() {
 
   return (
     <div className="app">
-      {/* Render Header only if the user is logged in */}
       {loggedInUser && <Header setActiveSection={setActiveSection} handleLogout={handleLogout} />}
       {renderSection()}
     </div>
+  );
+}
+
+function Header({ setActiveSection, handleLogout }) {
+  return (
+    <header className="header">
+      <h1>Medico Learning Platform</h1>
+      <nav>
+        <ul>
+          <li><a href="#dashboard" onClick={() => setActiveSection('dashboard')}>Dashboard</a></li>
+          <li><a href="#calendar" onClick={() => setActiveSection('calendar')}>Calendar</a></li>
+          <li><a href="#courses" onClick={() => setActiveSection('courses')}>Courses</a></li>
+          <li><a href="#tests" onClick={() => setActiveSection('tests')}>Tests</a></li>
+          <li><a href="#analysis" onClick={() => setActiveSection('analysis')}>Analysis</a></li>
+          <li><a href="#notifications" onClick={() => setActiveSection('notifications')}>Notifications</a></li>
+          <li><a href="#notes" onClick={() => setActiveSection('notes')}>Notes</a></li>
+          <li><a href="#profile" onClick={() => setActiveSection('profile')}>Profile</a></li>
+          <li><a href="#qbanks" onClick={() => setActiveSection('qbanks')}>Qbanks</a></li>
+          <li><a href="#video-recordings" onClick={() => setActiveSection('video-recordings')}>Video Recordings</a></li>
+          <li><a href="#feedback" onClick={() => setActiveSection('feedback')}>Feedback</a></li>
+        </ul>
+      </nav>
+      <button onClick={handleLogout}>Logout</button>
+    </header>
   );
 }
 
@@ -62,34 +91,17 @@ function Login({ setActiveSection, users, handleLoginSuccess }) {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Check if the entered email and password match any user in the users array
     const user = users.find((user) => user.email === email && user.password === password);
-
-    if (user) {
-      handleLoginSuccess(user); // Pass the logged-in user to setLoggedInUser and navigate to the dashboard
-    } else {
-      setError('Invalid email or password');
-    }
+    if (user) handleLoginSuccess(user);
+    else setError('Invalid email or password');
   };
 
   return (
     <div className="login-container">
       <h2>Login</h2>
       <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         <button type="submit">Login</button>
         {error && <p className="error">{error}</p>}
       </form>
@@ -108,12 +120,10 @@ function Signup({ setActiveSection, addUser }) {
 
   const handleSignup = (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-    } else {
-      // Add new user to the list (assuming a simple users array or a state update)
+    if (password !== confirmPassword) setError('Passwords do not match');
+    else {
       addUser({ email, password });
-      setActiveSection('login'); // After successful signup, redirect to login page
+      setActiveSection('login');
     }
   };
 
@@ -121,27 +131,9 @@ function Signup({ setActiveSection, addUser }) {
     <div className="signup-container">
       <h2>Sign Up</h2>
       <form onSubmit={handleSignup}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
         <button type="submit">Sign Up</button>
         {error && <p className="error">{error}</p>}
       </form>
@@ -152,36 +144,33 @@ function Signup({ setActiveSection, addUser }) {
   );
 }
 
-function Header({ setActiveSection, handleLogout }) {
+function Calendar() {
+  const events = [
+    { date: '2024-01-02', title: 'Lesson: Cardiovascular System' },
+    { date: '2024-01-04', title: 'Test Deadline: Anatomy' },
+    { date: '2024-01-06', title: 'Live Class: Respiratory System' },
+  ];
+
   return (
-    <header className="header">
-      <h1>Medico Learning Platform</h1>
-      <nav>
-        <ul>
-          <li><a href="#dashboard" onClick={() => setActiveSection('dashboard')}>Dashboard</a></li>
-          <li><a href="#courses" onClick={() => setActiveSection('courses')}>Courses</a></li>
-          <li><a href="#tests" onClick={() => setActiveSection('tests')}>Tests</a></li>
-          <li><a href="#analysis" onClick={() => setActiveSection('analysis')}>Analysis</a></li>
-          <li><a href="#notifications" onClick={() => setActiveSection('notifications')}>Notifications</a></li>
-          <li><a href="#notes" onClick={() => setActiveSection('notes')}>Notes</a></li>
-        </ul>
-      </nav>
-      <button onClick={handleLogout}>Logout</button>
-    </header>
+    <section id="calendar">
+      <h2>Calendar</h2>
+      <ul>
+        {events.map((event, index) => (
+          <li key={index}>
+            <strong>{event.date}</strong>: {event.title}
+          </li>
+        ))}
+      </ul>
+      <p>Reminder notifications will be sent before events.</p>
+    </section>
   );
 }
-
 
 function Dashboard() {
   return (
     <section id="dashboard">
       <h2>Dashboard</h2>
       <p>Welcome to your personalized dashboard. Access your learning materials, track progress, and stay updated.</p>
-      <ul>
-        <li>Track your daily progress</li>
-        <li>View upcoming exams and deadlines</li>
-        <li>Access quick links to your courses and tests</li>
-      </ul>
     </section>
   );
 }
@@ -190,24 +179,7 @@ function Courses() {
   return (
     <section id="courses">
       <h2>Courses</h2>
-      <div className="course-grid">
-        <div className="course">
-          <h3>Anatomy</h3>
-          <p>Comprehensive video lectures and notes.</p>
-        </div>
-        <div className="course">
-          <h3>Physiology</h3>
-          <p>Detailed explanations with quizzes.</p>
-        </div>
-        <div className="course">
-          <h3>Pathology</h3>
-          <p>Master key concepts with interactive modules.</p>
-        </div>
-        <div className="course">
-          <h3>Pharmacology</h3>
-          <p>Learn drug mechanisms with interactive diagrams.</p>
-        </div>
-      </div>
+      <p>Explore and access detailed course materials.</p>
     </section>
   );
 }
@@ -216,12 +188,7 @@ function Tests() {
   return (
     <section id="tests">
       <h2>Tests</h2>
-      <p>Evaluate your knowledge with quizzes and exams tailored to your courses.</p>
-      <ul>
-        <li>Practice MCQs for each subject</li>
-        <li>Simulate mock exams with timed tests</li>
-        <li>View detailed solutions and explanations</li>
-      </ul>
+      <p>Evaluate your knowledge through interactive tests.</p>
     </section>
   );
 }
@@ -230,12 +197,7 @@ function Analysis() {
   return (
     <section id="analysis">
       <h2>Analysis</h2>
-      <p>Analyze your performance and progress through detailed insights.</p>
-      <ul>
-        <li>View subject-wise performance trends</li>
-        <li>Identify strengths and weaknesses</li>
-        <li>Access performance heatmaps for better focus</li>
-      </ul>
+      <p>Analyze your progress with performance insights.</p>
     </section>
   );
 }
@@ -244,12 +206,7 @@ function Notifications() {
   return (
     <section id="notifications">
       <h2>Notifications</h2>
-      <p>Stay updated with the latest announcements and reminders.</p>
-      <ul>
-        <li>Exam schedules and changes</li>
-        <li>Course updates and new content</li>
-        <li>Important platform notifications</li>
-      </ul>
+      <p>Stay updated with the latest alerts and announcements.</p>
     </section>
   );
 }
@@ -258,21 +215,47 @@ function Notes() {
   return (
     <section id="notes">
       <h2>Notes</h2>
-      <p>Access your saved notes and organize your learning resources.</p>
-      <ul>
-        <li>View subject-wise notes</li>
-        <li>Add new notes with rich formatting options</li>
-        <li>Organize notes with tags and folders</li>
-      </ul>
+      <p>Access and manage your study notes efficiently.</p>
     </section>
   );
 }
 
-function Footer() {
+function Profile({ loggedInUser }) {
   return (
-    <footer>
-      <p>&copy; 2024 Medico Learning Platform. All rights reserved.</p>
-    </footer>
+    <section id="profile">
+      <h2>Profile</h2>
+      <p>Email: {loggedInUser?.email}</p>
+    </section>
+  );
+}
+
+function Qbanks() {
+  return (
+    <section id="qbanks">
+      <h2>Qbanks</h2>
+      <p>Access a library of questions and explanations.</p>
+    </section>
+  );
+}
+
+function VideoRecordings() {
+  return (
+    <section id="video-recordings">
+      <h2>Video Recordings</h2>
+      <p>Watch recorded video lectures and tutorials.</p>
+    </section>
+  );
+}
+
+function Feedback() {
+  return (
+    <section id="feedback">
+      <h2>Feedback</h2>
+      <form>
+        <textarea placeholder="Share your feedback..." required></textarea>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
   );
 }
 

@@ -189,20 +189,66 @@ function Calendar() {
     { date: '2024-01-06', title: 'Live Class: Respiratory System' },
   ];
 
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  
+  const parsedEvents = events.map((event) => ({
+    ...event,
+    date: new Date(event.date),
+  }));
+
+  
+  const getEventsForDate = (date) =>
+    parsedEvents.filter((event) => event.date.toDateString() === date.toDateString());
+
+  
+  const renderCalendar = () => {
+    const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    const calendarDays = [];
+
+    for (let i = 1; i <= endDate.getDate(); i++) {
+      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
+      const isToday = currentDate.toDateString() === new Date().toDateString();
+      const eventsForDay = getEventsForDate(currentDate);
+
+      calendarDays.push(
+        <div
+          key={i}
+          className={`calendar-day ${isToday ? 'today' : ''} ${eventsForDay.length ? 'has-event' : ''}`}
+          onClick={() => setSelectedDate(currentDate)}
+        >
+          <span>{i}</span>
+          {eventsForDay.length > 0 && <div className="event-dot"></div>}
+        </div>
+      );
+    }
+
+    return calendarDays;
+  };
+
   return (
     <section id="calendar">
       <h2>Calendar</h2>
-      <ul>
-        {events.map((event, index) => (
-          <li key={index}>
-            <strong>{event.date}</strong>: {event.title}
-          </li>
-        ))}
-      </ul>
-      <p>Reminder notifications will be sent before events.</p>
+      <div className="calendar-container">
+        <div className="calendar-grid">{renderCalendar()}</div>
+        <div className="event-details">
+          <h3>Events for {selectedDate.toDateString()}:</h3>
+          <ul>
+            {getEventsForDate(selectedDate).length > 0 ? (
+              getEventsForDate(selectedDate).map((event, index) => (
+                <li key={index}>{event.title}</li>
+              ))
+            ) : (
+              <li>No events for this day.</li>
+            )}
+          </ul>
+        </div>
+      </div>
     </section>
   );
 }
+
 
 function Dashboard() {
   return (

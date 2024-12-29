@@ -117,4 +117,44 @@
     color: white;
     margin-top: 1rem;
   }
+  .calendar-container {
+    display: flex;
+    gap: 20px;
+  }
+  
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    background-color: #f9f9f9;
+    padding: 10px;
+  }
+  
+  .calendar-day {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    cursor: pointer;
+  }
+  
+  .calendar-day.today {
+    background-color: #ffeb3b;
+  }
+  
+  .calendar-day.has-event {
+    border: 2px solid #4caf50;
+  }
+  
+  .event-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #f44336;
+    border-radius: 50%;
+    margin: 5px auto 0;
+  }
+  
+  .event-details {
+    flex: 1;
+  }
+  
   

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
+import ReactCalendar from 'react-calendar';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
@@ -183,72 +184,176 @@ function Signup({ setActiveSection, addUser }) {
 }
 
 function Calendar() {
-  const events = [
-    { date: '2024-01-02', title: 'Lesson: Cardiovascular System' },
-    { date: '2024-01-04', title: 'Test Deadline: Anatomy' },
-    { date: '2024-01-06', title: 'Live Class: Respiratory System' },
-  ];
+  const [date, setDate] = useState(new Date());
+  const [reminders, setReminders] = useState([]);
+  const [filter, setFilter] = useState("All");
+  const [form, setForm] = useState({
+    noteDate: "",
+    noteText: "",
+    noteType: "Lesson", // Default type
+    noteTime: "",
+    noteDetails: "",
+    notifyBefore: "1 day", // Default notification timing
+  });
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  useEffect(() => {
+    checkNotificationPermission();
+    const savedReminders = JSON.parse(localStorage.getItem("reminders")) || [];
+    setReminders(savedReminders);
+  }, []);
 
-  
-  const parsedEvents = events.map((event) => ({
-    ...event,
-    date: new Date(event.date),
-  }));
+  useEffect(() => {
+    localStorage.setItem("reminders", JSON.stringify(reminders));
+    handleNotifications();
+  }, [reminders]);
 
-  
-  const getEventsForDate = (date) =>
-    parsedEvents.filter((event) => event.date.toDateString() === date.toDateString());
-
-  
-  const renderCalendar = () => {
-    const startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-    const endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-    const calendarDays = [];
-
-    for (let i = 1; i <= endDate.getDate(); i++) {
-      const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i);
-      const isToday = currentDate.toDateString() === new Date().toDateString();
-      const eventsForDay = getEventsForDate(currentDate);
-
-      calendarDays.push(
-        <div
-          key={i}
-          className={`calendar-day ${isToday ? 'today' : ''} ${eventsForDay.length ? 'has-event' : ''}`}
-          onClick={() => setSelectedDate(currentDate)}
-        >
-          <span>{i}</span>
-          {eventsForDay.length > 0 && <div className="event-dot"></div>}
-        </div>
-      );
+  const checkNotificationPermission = () => {
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
     }
-
-    return calendarDays;
   };
 
+  const handleAddReminder = () => {
+    const { noteDate, noteText, noteType, noteTime, noteDetails, notifyBefore } = form;
+    if (noteDate && noteText) {
+      const newReminder = {
+        date: noteDate,
+        text: noteText,
+        type: noteType,
+        time: noteTime,
+        details: noteDetails,
+        notifyBefore,
+      };
+      setReminders([...reminders, newReminder]);
+      setForm({
+        noteDate: "",
+        noteText: "",
+        noteType: "Lesson",
+        noteTime: "",
+        noteDetails: "",
+        notifyBefore: "1 day",
+      });
+    }
+  };
+
+  const getRemindersForDate = (selectedDate) => {
+    const selectedDateString = selectedDate.toISOString().split("T")[0];
+    return reminders.filter((reminder) => reminder.date === selectedDateString);
+  };
+
+  const handleNotifications = () => {
+    reminders.forEach((reminder) => {
+      const now = new Date();
+      const reminderTime = new Date(`${reminder.date}T${reminder.time || "00:00:00"}`);
+      const notifyBefore = reminder.notifyBefore === "1 hour" ? 3600000 : 86400000;
+
+      if (reminderTime - now <= notifyBefore && reminderTime > now) {
+        new Notification(`Upcoming ${reminder.type}`, {
+          body: `${reminder.text} - ${reminder.details}`,
+        });
+      }
+    });
+  };
+
+  const filteredReminders = filter === "All" 
+    ? reminders 
+    : reminders.filter((reminder) => reminder.type === filter);
+
   return (
-    <section id="calendar">
-      <h2>Calendar</h2>
+    <div className="calendar-app">
+      {/* Sidebar */}
+      <div className="calendar-sidebar">
+        <h3>Reminders</h3>
+        <div className="filter-buttons">
+          <button onClick={() => setFilter("All")}>All</button>
+          <button onClick={() => setFilter("Lesson")}>Lessons</button>
+          <button onClick={() => setFilter("Test")}>Tests</button>
+        </div>
+        <ul className="reminders-list">
+          {filteredReminders.map((reminder, index) => (
+            <li key={index}>
+              <strong>{reminder.type}:</strong> {reminder.text} - {reminder.date} at {reminder.time || "All Day"}
+              <br />
+              <small>{reminder.details}</small>
+              <button
+                className="delete-button"
+                onClick={() => setReminders(reminders.filter((_, i) => i !== index))}
+              >
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="add-reminder">
+          <h4>Add Reminder</h4>
+          <input
+            type="date"
+            value={form.noteDate}
+            onChange={(e) => setForm({ ...form, noteDate: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder="Title"
+            value={form.noteText}
+            onChange={(e) => setForm({ ...form, noteText: e.target.value })}
+          />
+          <select
+            value={form.noteType}
+            onChange={(e) => setForm({ ...form, noteType: e.target.value })}
+          >
+            <option value="Lesson">Lesson</option>
+            <option value="Test">Test</option>
+          </select>
+          <input
+            type="time"
+            value={form.noteTime}
+            onChange={(e) => setForm({ ...form, noteTime: e.target.value })}
+          />
+          <textarea
+            placeholder="Details (optional)"
+            value={form.noteDetails}
+            onChange={(e) => setForm({ ...form, noteDetails: e.target.value })}
+          />
+          <select
+            value={form.notifyBefore}
+            onChange={(e) => setForm({ ...form, notifyBefore: e.target.value })}
+          >
+            <option value="1 day">1 Day Before</option>
+            <option value="1 hour">1 Hour Before</option>
+          </select>
+          <button onClick={handleAddReminder}>Add</button>
+        </div>
+      </div>
+
+      {/* Calendar */}
       <div className="calendar-container">
-        <div className="calendar-grid">{renderCalendar()}</div>
-        <div className="event-details">
-          <h3>Events for {selectedDate.toDateString()}:</h3>
+        <Calendar
+          onChange={setDate}
+          value={date}
+          tileContent={({ date }) =>
+            getRemindersForDate(date).length > 0 && <div className="event-dot"></div>
+          }
+        />
+        <div className="selected-date-reminders">
+          <h3>Reminders for {date.toDateString()}</h3>
           <ul>
-            {getEventsForDate(selectedDate).length > 0 ? (
-              getEventsForDate(selectedDate).map((event, index) => (
-                <li key={index}>{event.title}</li>
+            {getRemindersForDate(date).length > 0 ? (
+              getRemindersForDate(date).map((reminder, index) => (
+                <li key={index}>
+                  <strong>{reminder.type}:</strong> {reminder.text} - {reminder.time || "All Day"}
+                  <br />
+                  <small>{reminder.details}</small>
+                </li>
               ))
             ) : (
-              <li>No events for this day.</li>
+              <li>No reminders for today</li>
             )}
           </ul>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
-
 
 function Dashboard() {
   return (
@@ -359,13 +464,282 @@ function Profile({ loggedInUser }) {
 }
 
 function Qbanks() {
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [selectedSubtopic, setSelectedSubtopic] = useState(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [showResult, setShowResult] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [leaderboard, setLeaderboard] = useState(
+    JSON.parse(localStorage.getItem('leaderboard')) || []
+  );
+
+  const questionBanks = [
+    {
+      topic: 'Anatomy',
+      subtopics: {
+        'General Anatomy': [
+          { question: 'What is a ligament?', answer: 'A ligament connects bones to other bones.' },
+          { question: 'Name the types of cartilage.', answer: 'Hyaline, Fibrocartilage, Elastic.' },
+        ],
+        'Neuroanatomy': [
+          { question: 'What is the function of the thalamus?', answer: 'Relay sensory and motor signals to the cerebral cortex.' },
+          { question: 'Define cranial nerves.', answer: 'The nerves that emerge directly from the brain.' },
+        ],
+      },
+    },
+    {
+      topic: 'Physiology',
+      subtopics: {
+        'Cardiovascular System': [
+          { question: 'What is cardiac output?', answer: 'The volume of blood pumped by the heart per minute.' },
+          { question: 'Define blood pressure.', answer: 'The pressure exerted by circulating blood upon the walls of blood vessels.' },
+        ],
+        'Nervous System': [
+          { question: 'What is an action potential?', answer: 'A rapid rise and fall in electrical potential across a cell membrane.' },
+          { question: 'Define synapse.', answer: 'A junction between two nerve cells where impulses pass by diffusion of neurotransmitters.' },
+        ],
+      },
+    },
+  ];
+
+  useEffect(() => {
+    if (selectedSubtopic) setStartTime(new Date());
+  }, [selectedSubtopic]);
+
+  const handleAnswerSubmit = () => {
+  if (!selectedTopic || !selectedSubtopic) return;
+
+  const currentQuestion =
+    questionBanks
+      .find((bank) => bank.topic === selectedTopic.topic)
+      ?.subtopics[selectedSubtopic]?.[currentQuestionIndex];
+
+  if (!currentQuestion) return;
+
+  if (userAnswer.trim().toLowerCase() === currentQuestion.answer.toLowerCase()) {
+    setScore(score + 1);
+  }
+
+    setUserAnswer('');
+    if (currentQuestionIndex + 1 < questionBanks.find((bank) => bank.topic === selectedTopic.topic).subtopics[selectedSubtopic].length) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      const endTime = new Date();
+      setTimeSpent((endTime - startTime) / 1000);
+      saveLeaderboardEntry();
+      setShowResult(true);
+    }
+  };
+
+  const saveLeaderboardEntry = () => {
+    const accuracy = (
+      (score /
+        questionBanks
+          .find((bank) => bank.topic === selectedTopic.topic)
+          .subtopics[selectedSubtopic].length) *
+      100
+    ).toFixed(2);
+
+    const entry = {
+      topic: selectedTopic.topic,
+      subtopic: selectedSubtopic,
+      score,
+      accuracy,
+      timeSpent,
+    };
+
+    const updatedLeaderboard = [...leaderboard, entry];
+    setLeaderboard(updatedLeaderboard);
+    localStorage.setItem('leaderboard', JSON.stringify(updatedLeaderboard));
+  };
+
+  const renderLeaderboard = () => (
+    <div className="leaderboard">
+      <h3>Leaderboard</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Topic</th>
+            <th>Subtopic</th>
+            <th>Score</th>
+            <th>Accuracy</th>
+            <th>Time Spent (s)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {leaderboard.map((entry, index) => (
+            <tr
+              key={index}
+              className={index === 0 ? 'top-performer' : ''}
+            >
+              <td>{entry.topic}</td>
+              <td>{entry.subtopic}</td>
+              <td>{entry.score}</td>
+              <td>{entry.accuracy}%</td>
+              <td>{entry.timeSpent}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const renderReviewMode = () => (
+    <div className="review-container">
+      <h3>Review Questions</h3>
+      {questionBanks
+        .find((bank) => bank.topic === selectedTopic.topic)
+        .subtopics[selectedSubtopic].map((item, index) => (
+          <div
+            key={index}
+            className={`review-item ${
+              userAnswer.toLowerCase() === item.answer.toLowerCase() ? 'correct' : 'incorrect'
+            }`}
+          >
+            <p>
+              <strong>Q:</strong> {item.question}
+            </p>
+            <p>
+              <strong>Your Answer:</strong> {item.answer}
+            </p>
+            <p>
+              <strong>Correct Answer:</strong> {item.answer}
+            </p>
+          </div>
+        ))}
+      <button
+        onClick={() => {
+          setReviewMode(false);
+          setSelectedSubtopic(null);
+          setSelectedTopic(null);
+        }}
+      >
+        Back to Topics
+      </button>
+    </div>
+  );
+
   return (
-    <section id="qbanks">
-      <h2>Qbanks</h2>
-      <p>Access a library of questions and explanations.</p>
-    </section>
+    <div className="qbanks">
+      <h2>Question Banks</h2>
+      <p>Select a topic and subtopic to practice questions.</p>
+
+      {/* Leaderboard */}
+      {renderLeaderboard()}
+
+      {reviewMode ? (
+        renderReviewMode()
+      ) : (
+        <>
+          {!selectedTopic && (
+            <div className="topics">
+              {questionBanks.map((bank, index) => (
+                <div
+                  key={index}
+                  className="topic-card"
+                  onClick={() => setSelectedTopic(bank)}
+                >
+                  <h3>{bank.topic}</h3>
+                  <p>{Object.keys(bank.subtopics).join(', ')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedTopic && !selectedSubtopic && (
+            <div className="subtopics">
+              <h3>{selectedTopic.topic} Subtopics</h3>
+              <ul>
+                {Object.keys(selectedTopic.subtopics).map((subtopic, index) => (
+                  <li
+                    key={index}
+                    onClick={() => setSelectedSubtopic(subtopic)}
+                    className="subtopic-item"
+                  >
+                    {subtopic}
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => setSelectedTopic(null)}>Back to Topics</button>
+            </div>
+          )}
+
+          {selectedTopic && selectedSubtopic && !showResult && (
+  <div className="questions">
+              <h3>
+                {selectedTopic.topic} - {selectedSubtopic}
+              </h3>
+              <p>
+                Question {currentQuestionIndex + 1} of{' '}
+                {questionBanks
+                  .find((bank) => bank.topic === selectedTopic.topic)
+                  .subtopics[selectedSubtopic].length}
+              </p>
+              <div className="question">
+                <p>
+                  <strong>Q:</strong>{' '}
+                  {
+                    questionBanks
+                      .find((bank) => bank.topic === selectedTopic.topic)
+                      .subtopics[selectedSubtopic][currentQuestionIndex].question
+                  }
+                </p>
+                <input
+                  type="text"
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="Type your answer here"
+                />
+                <button onClick={handleAnswerSubmit}>Submit Answer</button>
+              </div>
+            </div>
+          )}
+
+          {showResult && (
+            <div className="result">
+              <h3>Quiz Results</h3>
+              <p>
+                You scored {score} out of{' '}
+                {questionBanks
+                  .find((bank) => bank.topic === selectedTopic.topic)
+                  .subtopics[selectedSubtopic].length}.
+              </p>
+              <p>
+                Accuracy:{' '}
+                {(
+                  (score /
+                    questionBanks
+                      .find((bank) => bank.topic === selectedTopic.topic)
+                      .subtopics[selectedSubtopic].length) *
+                  100
+                ).toFixed(2)}
+                %
+              </p>
+              <p>Time Spent: {timeSpent} seconds</p>
+              <button onClick={() => setReviewMode(true)}>Review Questions</button>
+              <button
+                onClick={() => {
+                  setSelectedSubtopic(null);
+                  setSelectedTopic(null);
+                  setCurrentQuestionIndex(0);
+                  setScore(0);
+                  setShowResult(false);
+                }}
+              >
+                Back to Topics
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
+
 
 function VideoRecordings() {
   return (
